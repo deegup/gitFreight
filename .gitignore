@@ -1,1 +1,10 @@
-package-lock.json
+node_modules
+.next
+.env
+.env.local
+*.log
+*.tsbuildinfo
+__pycache__/
+.pytest_cache/
+.venv/
+prisma/dev.db

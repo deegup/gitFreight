@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum VehicleStatus {
+  ON_ROUTE
+  IDLE
+  OFFLINE
+  MAINTENANCE
+}
+
+enum AlertType {
+  FUEL_ANOMALY
+  EXCESS_IDLE
+  ROUTE_DEVIATION
+  SERVICE_DUE
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+model Organization {
+  id String @id @default(cuid())
+  name String
+  vehicles Vehicle[]
+  drivers Driver[]
+  alerts Alert[]
+  recommendations Recommendation[]
+  createdAt DateTime @default(now())
+}
+
+model Driver {
+  id String @id @default(cuid())
+  organizationId String
+  name String
+  phone String?
+  score Int @default(80)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vehicles Vehicle[]
+}
+
+model Vehicle {
+  id String @id @default(cuid())
+  organizationId String
+  registration String @unique
+  make String?
+  model String?
+  status VehicleStatus @default(OFFLINE)
+  odometer Float @default(0)
+  fuelLevel Float?
+  apiKey String @unique
+  driverId String?
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  driver Driver? @relation(fields: [driverId], references: [id])
+  telemetry Telemetry[]
+}
+
+model Telemetry {
+  id String @id @default(cuid())
+  vehicleId String
+  timestamp DateTime
+  latitude Float
+  longitude Float
+  speed Float
+  ignition Boolean
+  odometer Float
+  fuelLevel Float?
+  harshBraking Int @default(0)
+  harshAcceleration Int @default(0)
+  overspeed Boolean @default(false)
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  @@index([vehicleId, timestamp])
+}
+
+model Alert {
+  id String @id @default(cuid())
+  organizationId String
+  vehicleId String?
+  type AlertType
+  status AlertStatus @default(OPEN)
+  title String
+  detail String
+  confidence Float?
+  featureSnapshot Json?
+  createdAt DateTime @default(now())
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Recommendation {
+  id String @id @default(cuid())
+  organizationId String
+  vehicleId String?
+  title String
+  detail String
+  savingsInr Float
+  modelVersion String
+  confidence Float
+  featureSnapshot Json
+  createdAt DateTime @default(now())
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
