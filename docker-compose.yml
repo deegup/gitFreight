@@ -1,17 +1,14 @@
 services:
-  db:
-    image: postgres:16-alpine
-    environment: { POSTGRES_DB: fleetpulse, POSTGRES_USER: fleetpulse, POSTGRES_PASSWORD: fleetpulse }
-    ports: ["5432:5432"]
-    volumes: ["postgres-data:/var/lib/postgresql/data"]
   app:
     build: .
     command: npm run dev
     ports: ["3000:3000"]
-    environment: { DATABASE_URL: "postgresql://fleetpulse:fleetpulse@db:5432/fleetpulse?schema=public", ML_SERVICE_URL: "http://ml:8000" }
+    env_file: [.env]
+    environment:
+      ML_SERVICE_URL: http://ml:8000
     volumes: [".:/app", "/app/node_modules"]
-    depends_on: [db, ml]
+    depends_on: [ml]
   ml:
     build: ./ml-service
+    env_file: [.env]
     ports: ["8000:8000"]
-volumes: { postgres-data: {} }
